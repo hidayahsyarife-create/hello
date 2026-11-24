@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratorium Kimia Virtual</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  header {
+    text-align: center;
+    padding: 14px 20px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 14px;
+    margin-bottom: 16px;
+  }
+  header h1 { font-size: 1.5rem; color: #7dd3fc; letter-spacing: 1px; }
+  header p { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
+  .layout {
+    display: grid;
+    grid-template-columns: 240px minmax(320px, 420px) 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .panel h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #7dd3fc;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(148,163,184,0.2);
+    padding-bottom: 6px;
+  }
+  .chem-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: rgba(51, 65, 85, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .chem-btn:hover { background: rgba(71, 85, 105, 0.9); transform: translateX(3px); }
+  .chem-btn:active { transform: scale(0.97); }
+  .chem-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4);
+    flex-shrink: 0;
+  }
+  .chem-name small { display: block; color: #94a3b8; font-size: 0.72rem; }
+  .controls button {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  .controls button:hover { filter: brightness(1.15); }
+  #btn-bakar { background: #dc2626; color: white; }
+  #btn-bakar.on { background: #f97316; box-shadow: 0 0 14px rgba(249,115,22,0.7); }
+  #btn-reset { background: #475569; color: white; }
+  #btn-aduk { background: #0891b2; color: white; }
+  .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .card {
+    background: rgba(15, 23, 42, 0.7);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .card .label { font-size: 0.68rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+  .card .value { font-size: 1.25rem; font-weight: 700; margin-top: 2px; }
+  #ph-value { transition: color 0.3s; }
+  .ph-bar {
+    grid-column: 1 / -1;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #dc2626, #f97316, #facc15, #22c55e, #06b6d4, #3b82f6, #8b5cf6);
+    position: relative;
+  }
+  #ph-cursor {
+    position: absolute;
+    top: -4px;
+    width: 4px;
+    height: 16px;
+    background: white;
+    border-radius: 2px;
+    left: 50%;
+    transition: left 0.3s;
+  }
+  #contents-list { font-size: 0.8rem; line-height: 1.7; max-height: 120px; overflow-y: auto; }
+  #contents-list .none { color: #64748b; font-style: italic; }
+  #log {
+    font-size: 0.75rem;
+    line-height: 1.6;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  #log .entry { padding: 3px 6px; border-left: 2px solid #38bdf8; margin-bottom: 4px; background: rgba(56,189,248,0.06); border-radius: 0 6px 6px 0; }
+  #log .entry.warn { border-color: #f59e0b; background: rgba(245,158,11,0.08); }
+  #log .entry.ok { border-color: #22c55e; background: rgba(34,197,94,0.08); }
+  .challenge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    padding: 6px 8px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+  }
+  .challenge.done { color: #4ade80; }
+  .challenge .mark { font-size: 1rem; }
+  canvas { display: block; margin: 0 auto; border-radius: 14px; }
+  .canvas-panel { text-align: center; }
+  .canvas-panel .hint { font-size: 0.75rem; color: #64748b; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚗️ Laboratorium Kimia Virtual</h1>
+  <p>Pilih bahan dari rak, tuangkan ke gelas kimia, panaskan, dan amati reaksinya!</p>
+</header>
+
+<div class="layout">
+
+  <div>
+    <div class="panel">
+      <h2>🧪 Rak Bahan Kimia</h2>
+      <div id="shelf"></div>
+    </div>
+    <div class="panel controls" style="margin-top:16px">
+      <h2>⚙️ Perlengkapan</h2>
+      <button id="btn-bakar">🔥 Nyalakan Pemanas</button>
+      <button id="btn-aduk">🥄 Aduk Larutan</button>
+      <button id="btn-reset">🗑️ Kosongkan Gelas</button>
+    </div>
+  </div>
+
+  <div class="panel canvas-panel">
+    <h2>🔬 Meja Kerja</h2>
+    <canvas id="lab" width="420" height="470"></canvas>
+    <p class="hint">Gelas kimia kapasitas 500 mL</p>
+  </div>
+
+  <div>
+    <div class="panel">
+      <h2>📊 Data Pengukuran</h2>
+      <div class="readouts">
+        <div class="card"><div class="label">Volume</div><div class="value" id="vol">0 mL</div></div>
+        <div class="card"><div class="label">Suhu</div><div class="value" id="temp">25°C</div></div>
+        <div class="card" style="grid-column:1/-1"><div class="label">pH</div><div class="value" id="ph-value">7,0</div></div>
+        <div class="ph-bar"><div id="ph-cursor"></div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>🧫 Isi Gelas</h2>
+      <div id="contents-list"><span class="none">Gelas masih kosong…</span></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>🏆 Tantangan Eksperimen</h2>
+      <div id="challenges"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>📋 Catatan Observasi</h2>
+      <div id="log"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+const CHEMS = [
+  { id:'air',   name:'Air Suling',        formula:'H₂O',           vol:50, dot:'#dbeafe' },
+  { id:'hcl',   name:'Asam Klorida',      formula:'HCl 0,1 M',     vol:25, acid:1, acidK:1,    dot:'#fca5a5' },
+  { id:'h2so4', name:'Asam Sulfat',       formula:'H₂SO₄ 0,1 M',   vol:25, acid:2, acidK:1,    dot:'#f87171' },
+  { id:'cuka',  name:'Asam Asetat',       formula:'CH₃COOH 0,1 M', vol:25, acid:1, acidK:0.04, dot:'#fecaca' },
+  { id:'naoh',  name:'Natrium Hidroksida',formula:'NaOH 0,1 M',    vol:25, base:1, baseK:1,    dot:'#93c5fd' },
+  { id:'nh3',   name:'Amonia',            formula:'NH₃ 0,1 M',     vol:25, base:1, baseK:0.04, dot:'#bfdbfe' },
+  { id:'nacl',  name:'Natrium Klorida',   formula:'NaCl 0,1 M',    vol:25, dot:'#f1f5f9' },
+  { id:'soda',  name:'Soda Kue',          formula:'NaHCO₃ 0,1 M',  vol:25, dot:'#e2e8f0' },
+  { id:'cuso4', name:'Tembaga(II) Sulfat',formula:'CuSO₄ 0,1 M',   vol:25, color:[37,99,235],   tint:0.004, dot:'#2563eb' },
+  { id:'agno3', name:'Perak Nitrat',      formula:'AgNO₃ 0,1 M',   vol:25, dot:'#f8fafc' },
+  { id:'kmno4', name:'Kalium Permanganat',formula:'KMnO₄ 0,01 M',  vol:25, color:[147,51,234],  tint:0.001, dot:'#9333ea' },
+  { id:'ft',    name:'Fenolftalein',      formula:'Indikator',     vol:2,  dot:'#f472b6' },
+  { id:'ui',    name:'Indikator Universal',formula:'Indikator',    vol:2,  dot:'#86efac' },
+];
+const CHEM = Object.fromEntries(CHEMS.map(c => [c.id, c]));
+
+const MAX_VOL = 500, AMBIENT = 25, BOIL = 99.5;
+
+const state = {
+  volume: 0,
+  temp: AMBIENT,
+  burner: false,
+  stirring: false,
+  contents: {},
+  h: 0, oh: 0,
+  pAg: 0, pCu: 0,
+  bubbles: [], steam: [],
+  gasRate: 0, boiling: false,
+  stirTimer: 0,
+  done: {},
+};
+
+const canvas = document.getElementById('lab');
+const ctx = canvas.getContext('2d');
+const logEl = document.getElementById('log');
+
+function log(msg, cls) {
+  const d = document.createElement('div');
+  d.className = 'entry' + (cls ? ' ' + cls : '');
+  d.textContent = msg;
+  logEl.prepend(d);
+  while (logEl.children.length > 40) logEl.lastChild.remove();
+}
+
+function fmtMol(n) {
+  if (n >= 0.001) return n.toFixed(3) + ' mol';
+  if (n >= 1e-5) return (n * 1000).toFixed(1) + ' mmol';
+  return (n * 1e6).toFixed(1) + ' µmol';
+}
+
+function buildShelf() {
+  const shelf = document.getElementById('shelf');
+  CHEMS.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chem-btn';
+    b.innerHTML = `<span class="chem-dot" style="background:${c.dot}"></span><span class="chem-name">${c.name}<small>${c.formula} · ${c.vol} mL</small></span>`;
+    b.onclick = () => addChem(c.id);
+    shelf.appendChild(b);
+  });
+}
+
+function addChem(id) {
+  const c = CHEM[id];
+  if (state.volume + c.vol > MAX_VOL) {
+    log('Gelas kimia penuh! Kosongkan dahulu.', 'warn');
+    return;
+  }
+  const conc = concMol(c);
+  const moles = conc > 0 ? conc * c.vol / 1000 : c.vol / 1000;
+  state.volume += c.vol;
+  state.contents[id] = (state.contents[id] || 0) + moles;
+  if (c.acid) state.h += moles * c.acid * c.acidK;
+  if (c.base) state.oh += moles * c.base * c.baseK;
+  log(`Ditambahkan ${c.name} ${c.vol} mL.`);
+}
+
+function concMol(c) {
+  const m = c.formula.match(/([\d,]+)\s?M/);
+  return m ? parseFloat(m[1].replace(',', '.')) : 0;
+}
+
+function pHColor(ph) {
+  if (ph <= 3) return '#dc2626';
+  if (ph <= 5) return '#f97316';
+  if (ph <= 6.5) return '#facc15';
+  if (ph <= 7.5) return '#22c55e';
+  if (ph <= 9) return '#06b6d4';
+  if (ph <= 11) return '#3b82f6';
+  return '#8b5cf6';
+}
+
+function universalColor(ph) {
+  const stops = [
+    [2, [220,38,38]], [4, [249,115,22]], [6, [250,204,21]], [7, [34,197,94]],
+    [8, [6,182,212]], [10, [59,130,246]], [12, [139,92,246]], [14, [88,28,135]],
+  ];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (ph <= stops[i + 1][0]) {
+      const t = (ph - stops[i][0]) / (stops[i + 1][0] - stops[i][0]);
+      const a = stops[i][1], b = stops[i + 1][1];
+      return a.map((v, j) => Math.round(v + (b[j] - v) * t));
+    }
+  }
+  return [88,28,135];
+}
+
+function currentPH() {
+  const net = state.h - state.oh;
+  if (state.volume <= 0) return 7;
+  const L = state.volume / 1000;
+  const c = Math.abs(net) / L;
+  if (c < 1e-8) return 7;
+  let ph = net > 0 ? -Math.log10(c) : 14 + Math.log10(c);
+  return Math.min(14, Math.max(0, ph));
+}
+
+function liquidColor() {
+  let col = [120, 150, 170];
+  let alpha = 0.14;
+  const tint = (moles, ref, rgb) => {
+    const inten = Math.min(1, moles / ref);
+    if (inten > 0) {
+      col = mix(col, rgb, inten * 0.25);
+      alpha += 0.2 * inten;
+    }
+  };
+  tint(state.contents.cuso4 || 0, CHEM.cuso4.tint, [37, 99, 235]);
+  tint(state.contents.kmno4 || 0, CHEM.kmno4.tint, [147, 51, 234]);
+  if (state.contents.ui) {
+    col = mix(col, universalColor(currentPH()), 0.25);
+    alpha += 0.25;
+  }
+  if (state.contents.ft && currentPH() > 8.2) {
+    col = mix(col, [236, 72, 153], 0.8);
+    alpha += 0.5;
+  }
+  return { col, alpha: Math.min(0.92, alpha) };
+}
+
+function mix(a, b, t) {
+  return a.map((v, i) => Math.round(v + (b[i] - v) * t));
+}
+
+function tick() {
+  const dt = 0.1;
+  if (state.volume <= 0) {
+    state.temp = AMBIENT;
+    state.bubbles = []; state.steam = [];
+    state.h = 0; state.oh = 0;
+    state.contents = {};
+    state.pAg = 0; state.pCu = 0;
+    state.gasRate = 0; state.boiling = false;
+    updateUI();
+    return;
+  }
+
+  if (state.stirring && state.stirTimer <= 0) state.stirring = false;
+  if (state.stirTimer > 0) state.stirTimer -= dt;
+
+  if (state.burner) {
+    state.temp = Math.min(112, state.temp + 1.6);
+  } else {
+    state.temp = Math.max(AMBIENT, state.temp - 0.5);
+  }
+
+  state.boiling = state.temp >= BOIL;
+  if (state.boiling) {
+    state.volume = Math.max(0, state.volume - 0.6);
+    if (Math.random() < 0.55) logThrottled('Larutan mendidih! Uap air terlepas…', 'warn', 3000);
+  }
+
+  if (state.h > 0 && state.oh > 0) {
+    const k = Math.min(state.h, state.oh);
+    state.h -= k; state.oh -= k;
+    state.temp = Math.min(112, state.temp + Math.min(6, k * 400));
+    logThrottled('Reaksi netralisasi: asam + basa → garam + air (gerak ekshotermik)', 'ok', 2500);
+  }
+
+  state.gasRate = 0;
+  if (state.contents.soda > 0 && state.h > 0) {
+    const r = Math.min(state.contents.soda, state.h, 0.0022) * (state.stirring ? 2.2 : 1);
+    state.contents.soda -= r;
+    state.h -= r;
+    state.gasRate = r;
+    logThrottled('NaHCO₃ + H⁺ → CO₂↑ : gelembung gas karbon dioksida muncul!', 'ok', 3000);
+  }
+
+  if (state.contents.agno3 > 1e-8 && state.contents.nacl > 1e-8) {
+    const r = Math.min(state.contents.agno3, state.contents.nacl, 0.002) * 0.25 * (state.stirring ? 2 : 1);
+    state.contents.agno3 -= r;
+    state.contents.nacl -= r;
+    state.pAg += r;
+    logThrottled('AgNO₃ + NaCl → AgCl↓ endapan putih terbentuk!', 'ok', 3000);
+  }
+
+  if (state.contents.cuso4 > 1e-8 && state.oh > 1e-8) {
+    const r = Math.min(state.contents.cuso4, state.oh, 0.002) * 0.25 * (state.stirring ? 2 : 1);
+    state.contents.cuso4 -= r;
+    state.oh -= r;
+    state.pCu += r;
+    logThrottled('CuSO₄ + NaOH → Cu(OH)₂↓ endapan biru terbentuk!', 'ok', 3000);
+  }
+
+  Object.keys(state.contents).forEach(k => {
+    if (state.contents[k] < 1e-9) delete state.contents[k];
+  });
+
+  if (state.boiling && Math.random() < 0.8) {
+    state.bubbles.push({ x: 140 + Math.random() * 140, y: liquidSurfaceY() + 5, r: 1 + Math.random() * 3.5, vy: 0.7 + Math.random() * 1 });
+  }
+  if (state.gasRate > 0) {
+    const n = 2 + Math.floor(state.gasRate * 1200);
+    for (let i = 0; i < n; i++) {
+      state.bubbles.push({ x: 145 + Math.random() * 130, y: 385 - Math.random() * liquidHeightPx() * 0.25, r: 1 + Math.random() * (2 + state.gasRate * 600), vy: 0.5 + Math.random() * 1.2 });
+    }
+  }
+  state.bubbles.forEach(b => { b.y -= b.vy; });
+  state.bubbles = state.bubbles.filter(b => b.y > liquidSurfaceY() - 2);
+
+  if (state.temp > 45 && Math.random() < (state.temp - 45) / 90 + 0.08) {
+    state.steam.push({ x: 150 + Math.random() * 120, y: liquidSurfaceY(), r: 3 + Math.random() * 5, vy: 0.4 + Math.random() * 0.6, a: 0.5 });
+  }
+  state.steam.forEach(s => { s.y -= s.vy; s.a -= 0.006; s.r += 0.12; });
+  state.steam = state.steam.filter(s => s.a > 0);
+
+  checkChallenges();
+  updateUI();
+}
+
+let lastLog = {};
+function logThrottled(msg, cls, ms) {
+  const now = Date.now();
+  if (lastLog[msg] && now - lastLog[msg] < ms) return;
+  lastLog[msg] = now;
+  log(msg, cls);
+}
+
+function liquidHeightPx() {
+  return (state.volume / MAX_VOL) * 320;
+}
+function liquidSurfaceY() {
+  return 395 - liquidHeightPx();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const bx = 110, bw = 200, bTop = 65, bBot = 395;
+  const surfaceY = liquidSurfaceY();
+
+  if (state.burner) drawFlame(bx + bw / 2, bBot + 42);
+
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(bx - 10, bBot + 58, bw + 20, 8);
+  ctx.fillRect(bx + bw / 2 - 14, bBot + 30, 28, 30);
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(bx + 40, bBot + 58);
+  ctx.lineTo(bx + bw - 40, bBot + 58);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(226,232,240,0.08)';
+  ctx.fillRect(bx, bTop, bw, bBot - bTop);
+
+  if (state.volume > 0) {
+    const lc = liquidColor();
+    const grad = ctx.createLinearGradient(0, surfaceY, 0, bBot);
+    grad.addColorStop(0, `rgba(${lc.col},${Math.min(1, lc.alpha + 0.08)})`);
+    grad.addColorStop(1, `rgba(${lc.col},${lc.alpha})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx, surfaceY, bw, bBot - surfaceY);
+    ctx.strokeStyle = `rgba(${lc.col},0.6)`;
+    ctx.beginPath();
+    ctx.moveTo(bx, surfaceY);
+    ctx.lineTo(bx + bw, surfaceY);
+    ctx.stroke();
+
+    if (state.pAg > 0) {
+      const h = Math.min(26, state.pAg * 9000);
+      ctx.fillStyle = 'rgba(248,250,252,0.95)';
+      ctx.fillRect(bx + 2, bBot - h, bw - 4, h);
+    }
+    if (state.pCu > 0) {
+      const h = Math.min(26, state.pCu * 9000);
+      ctx.fillStyle = 'rgba(37,99,235,0.95)';
+      ctx.fillRect(bx + 2, bBot - h, bw - 4, h);
+    }
+
+    state.bubbles.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.stroke();
+    });
+  }
+
+  ctx.strokeStyle = 'rgba(226,232,240,0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(bx, bTop);
+  ctx.lineTo(bx, bBot - 6);
+  ctx.quadraticCurveTo(bx, bBot, bx + 6, bBot);
+  ctx.lineTo(bx + bw - 6, bBot);
+  ctx.quadraticCurveTo(bx + bw, bBot, bx + bw, bBot - 6);
+  ctx.lineTo(bx + bw, bTop);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bx, bTop);
+  ctx.lineTo(bx - 10, bTop - 12);
+  ctx.lineTo(bx + 4, bTop - 4);
+  ctx.stroke();
+
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = 'rgba(148,163,184,0.9)';
+  for (let v = 100; v <= 500; v += 100) {
+    const y = 395 - (v / MAX_VOL) * 320;
+    ctx.beginPath();
+    ctx.moveTo(bx + 4, y);
+    ctx.lineTo(bx + 22, y);
+    ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillText(v + '', bx + 26, y + 3);
+  }
+
+  if (state.stirring && state.volume > 0) {
+    const t = Date.now() / 150;
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(210 - Math.sin(t) * 25, surfaceY + 12);
+    ctx.quadraticCurveTo(210, surfaceY + 35, 210 + Math.sin(t) * 25, surfaceY + 55);
+    ctx.stroke();
+  }
+
+  state.steam.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(226,232,240,${s.a})`;
+    ctx.fill();
+  });
+
+  drawThermometer(345, bTop, bBot);
+  readCanvasFrame();
+
+  requestAnimationFrame(draw);
+}
+
+function readCanvasFrame() {
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+}
+
+function drawThermometer(x, top, bot) {
+  ctx.fillStyle = 'rgba(15,23,42,0.85)';
+  ctx.strokeStyle = '#64748b';
+  ctx.beginPath();
+  ctx.roundRect(x - 6, top, 12, bot - top + 14, 6);
+  ctx.fill();
+  ctx.stroke();
+  const frac = Math.min(1, Math.max(0, (state.temp - 0) / 110));
+  const th = frac * (bot - top - 10);
+  ctx.fillStyle = state.temp >= BOIL ? '#ef4444' : '#fb7185';
+  ctx.beginPath();
+  ctx.arc(x, bot + 4, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(x - 2.5, bot + 4 - th, 5, th);
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText(Math.round(state.temp) + '°C', x + 12, bot + 8);
+}
+
+function drawFlame(cx, baseY) {
+  const t = Date.now() / 90;
+  for (let i = 0; i < 3; i++) {
+    const w = 18 - i * 5;
+    const h = (34 - i * 9) + Math.sin(t + i * 2) * 5;
+    const g = ctx.createLinearGradient(cx, baseY, cx, baseY - h);
+    const cols = [['rgba(239,68,68,0.9)', 'rgba(249,115,22,0.6)'], ['rgba(249,115,22,0.95)', 'rgba(250,204,21,0.7)'], ['rgba(250,204,21,0.9)', 'rgba(254,240,138,0.8)']][i];
+    g.addColorStop(0, cols[1]);
+    g.addColorStop(1, cols[0]);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(cx + Math.sin(t + i) * 2, baseY - h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function updateUI() {
+  document.getElementById('vol').textContent = Math.round(state.volume) + ' mL';
+  document.getElementById('temp').textContent = Math.round(state.temp) + '°C';
+  const ph = currentPH();
+  const phEl = document.getElementById('ph-value');
+  phEl.textContent = state.volume > 0 ? ph.toFixed(1).replace('.', ',') : '—';
+  phEl.style.color = state.volume > 0 ? pHColor(ph) : '#64748b';
+  document.getElementById('ph-cursor').style.left = (ph / 14 * 100) + '%';
+
+  const list = [];
+  Object.entries(state.contents).forEach(([id, mol]) => {
+    if (mol > 1e-7) list.push(`<div>${CHEM[id] ? CHEM[id].name : id}: ${fmtMol(mol)}</div>`);
+  });
+  if (state.h > 1e-7) list.push(`<div style="color:#f87171">H⁺ (asam berlebih): ${fmtMol(state.h)}</div>`);
+  if (state.oh > 1e-7) list.push(`<div style="color:#60a5fa">OH⁻ (basa berlebih): ${fmtMol(state.oh)}</div>`);
+  if (state.pAg > 0) list.push(`<div style="color:#e2e8f0">Endapan AgCl (putih): ${fmtMol(state.pAg)}</div>`);
+  if (state.pCu > 0) list.push(`<div style="color:#93c5fd">Endapan Cu(OH)₂ (biru): ${fmtMol(state.pCu)}</div>`);
+  document.getElementById('contents-list').innerHTML =
+    list.length ? list.join('') : '<span class="none">Gelas masih kosong…</span>';
+}
+
+const CHALLENGES = [
+  { id:'neutral', text:'Buat larutan netral (pH 6–7,5) dari asam + basa', test: () => currentPH() >= 6 && currentPH() <= 7.5 && state.volume > 100 && (state.h + state.oh < 1e-6) && Object.keys(state.contents).some(k => CHEM[k] && (CHEM[k].acid || CHEM[k].base)) },
+  { id:'agcl', text:'Buat endapan putih AgCl', test: () => state.pAg > 0.0005 },
+  { id:'cuoh2', text:'Buat endapan biru Cu(OH)₂', test: () => state.pCu > 0.0005 },
+  { id:'pink', text:'Buat larutan merah muda (fenolftalein + basa)', test: () => state.contents.ft > 0 && currentPH() > 8.2 },
+  { id:'boil', text:'Didihkan air hingga 100°C', test: () => state.temp >= 99.5 },
+  { id:'co2', text:'Timbulkan gelembung gas CO₂', test: () => state.gasRate > 0 },
+  { id:'purple', text:'Warnai larutan ungu dengan KMnO₄', test: () => (state.contents.kmno4 || 0) > 0.0001 },
+];
+
+function buildChallenges() {
+  const el = document.getElementById('challenges');
+  CHALLENGES.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'challenge';
+    d.id = 'ch-' + c.id;
+    d.innerHTML = `<span class="mark">⬜</span><span>${c.text}</span>`;
+    el.appendChild(d);
+  });
+}
+
+function checkChallenges() {
+  CHALLENGES.forEach(c => {
+    if (!state.done[c.id] && c.test()) {
+      state.done[c.id] = true;
+      document.getElementById('ch-' + c.id).classList.add('done');
+      document.getElementById('ch-' + c.id).querySelector('.mark').textContent = '✅';
+      log(`Tantangan selesai: ${c.text} 🎉`, 'ok');
+    }
+  });
+}
+
+document.getElementById('btn-bakar').onclick = function () {
+  state.burner = !state.burner;
+  this.classList.toggle('on', state.burner);
+  this.textContent = state.burner ? '🔥 Matikan Pemanas' : '🔥 Nyalakan Pemanas';
+};
+
+document.getElementById('btn-aduk').onclick = function () {
+  if (state.volume <= 0) { log('Tidak ada larutan untuk diaduk.', 'warn'); return; }
+  state.stirring = true;
+  state.stirTimer = 2.5;
+  log('Larutan diaduk rata…', 'ok');
+};
+
+document.getElementById('btn-reset').onclick = () => {
+  state.volume = 0;
+  state.contents = {};
+  state.h = 0; state.oh = 0;
+  state.pAg = 0; state.pCu = 0;
+  state.bubbles = []; state.steam = [];
+  state.temp = AMBIENT;
+  log('Gelas kimia dikosongkan dan dibilas.', 'warn');
+};
+
+buildShelf();
+buildChallenges();
+setInterval(tick, 100);
+requestAnimationFrame(draw);
+log('Selamat datang di Laboratorium Kimia Virtual! Tambahkan air dahulu, lalu coba campur bahan.', 'ok');
+</script>
+</body>
+</html>
