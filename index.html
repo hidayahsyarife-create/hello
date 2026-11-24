@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NEON GENESIS — THE LAST SIGNAL</title>
+<style>
+  html, body { margin:0; padding:0; background:#000; height:100%; overflow:hidden; }
+  #stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  canvas { display:block; }
+  * { font-family: "Courier New", ui-monospace, monospace; }
+
+  /* letterbox */
+  #letterbox .bar {
+    position:absolute; left:0; right:0; height:0; background:#000; z-index:5;
+    transition: height 1.2s cubic-bezier(.6,0,.2,1);
+  }
+  #letterbox .bar.top { top:0; }
+  #letterbox .bar.bottom { bottom:0; }
+  #letterbox.active .bar { height:7.5vh; }
+
+  /* scene title, lower-left, broadcast style */
+  #scene-title {
+    position:absolute; left:8vw; bottom:11vh; z-index:6;
+    color:#cfe3ff; letter-spacing:0.35em; font-size:14px;
+    opacity:0;
+    text-shadow: 0 0 12px rgba(120,180,255,0.55);
+  }
+
+  /* full-screen story message (S03: CONNECTION ESTABLISHED) */
+  #hud-message {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    z-index:6; color:#bfe4ff; font-size:clamp(20px,4vw,52px);
+    letter-spacing:0.45em; text-indent:0.45em;
+    opacity:0;
+    text-shadow: 0 0 24px rgba(120,190,255,0.8);
+    pointer-events:none;
+  }
+
+  /* storm flash + blackout overlays */
+  #glitch-flash {
+    position:absolute; inset:0; background:#cfe6ff; z-index:7; opacity:0; pointer-events:none;
+  }
+  #blackout {
+    position:absolute; inset:0; background:#000; z-index:8; opacity:0; pointer-events:none;
+  }
+
+  /* final title sequence over black */
+  #final-title {
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; z-index:9; visibility:hidden; text-align:center; gap:20px;
+    pointer-events:none;
+  }  #final-title h1 {
+    color:#fff; font-size:clamp(30px,5.5vw,72px); font-weight:700; margin:0;
+    letter-spacing:0.3em; text-indent:0.3em;
+    text-shadow:0 0 34px rgba(159,216,255,0.55);
+  }
+  #final-title h2 {
+    color:#ff2d95; font-size:clamp(13px,1.7vw,20px); font-weight:400; margin:0;
+    letter-spacing:0.6em; text-indent:0.6em;
+    text-shadow:0 0 18px rgba(255,45,149,0.6);
+  }
+  #final-title .begin {
+    color:#8ba8c8; font-size:clamp(11px,1.3vw,15px); margin-top:26px;
+    letter-spacing:0.5em; text-indent:0.5em;
+  }
+
+  /* interactive decoder panel (Phaser module mounts here) */
+  #decoder-slot {
+    position:absolute; right:3vw; bottom:11vh; z-index:6; width:340px; height:220px;
+    opacity:0; transition: opacity 0.8s ease; cursor: pointer;
+  }
+
+  #rec {
+    position:absolute; left:8vw; top:11vh; z-index:6; display:none;
+    color:#ff4d5e; font-size:13px; letter-spacing:0.35em;
+  }
+  #rec::before {
+    content:''; display:inline-block; width:10px; height:10px; border-radius:50%;
+    background:#ff4d5e; margin-right:10px; vertical-align:middle;
+    animation: recblink 1s steps(2, start) infinite;
+  }
+  @keyframes recblink { to { visibility: hidden; } }
+
+  #start {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:#000; z-index:10;
+    cursor:pointer; color:#9fd8ff; letter-spacing:0.5em; font-size:15px;
+    gap:14px;
+  }
+  #start h1 { font-size:clamp(28px,5vw,64px); color:#fff; letter-spacing:0.28em;
+              text-indent:0.28em; margin:0; font-weight:700; }
+  #start h2 { font-size:clamp(12px,1.6vw,18px); color:#ff2d95;
+              letter-spacing:0.6em; text-indent:0.6em; margin:0; font-weight:400; }
+  #start .play { margin-top:34px; color:#9fd8ff; opacity:0.85; font-size:13px; }
+  #start:hover .play { color:#fff; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="letterbox"><div class="bar top"></div><div class="bar bottom"></div></div>
+  <div id="scene-title"></div>
+  <div id="hud-message"></div>
+  <div id="decoder-slot"></div>
+  <div id="rec">REC</div>
+  <div id="glitch-flash"></div>
+  <div id="blackout"></div>
+  <div id="final-title">
+    <h1>NEON GENESIS</h1>
+    <h2>THE LAST SIGNAL</h2>
+    <div class="begin">A NEW WORLD BEGINS.</div>
+  </div>
+  <div id="start">
+    <h2>A CINEMATIC SEQUENCE</h2>
+    <h1>NEON GENESIS</h1>
+    <h2>THE LAST SIGNAL</h2>
+    <div class="play">▶&nbsp; CLICK TO BEGIN — 40 SECONDS</div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "./node_modules/three/build/three.module.js",
+    "three/addons/": "./node_modules/three/examples/jsm/",
+    "gsap": "./node_modules/gsap/index.js"
+  }
+}
+</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
